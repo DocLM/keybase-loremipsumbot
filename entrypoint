@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+echo "Starting keybase as a background service..."
+nohup kbfsfuse >> /var/log/keybase/kbfsfuse.log 2>&1 &
+nohup keybase service --auto-forked >> /var/log/keybase/keybase.log 2>&1 &
+sleep 3
+echo "Connecting to keybase server..."
+
+# Check if there is a file to use as username, else use env variable.
+if [[ -f "${KEYBASE_USERNAME_FILE}" ]]; then
+  KB_USER=$(cat "${KEYBASE_USERNAME_FILE}")
+else
+  # Don't store the username in env variable.
+  KB_USER="${KEYBASE_USERNAME}"
+  unset KEYBASE_USERNAME
+fi
+
+# Check if there is a file to use as paperkey, else use env variable.
+if [[ -f "${KEYBASE_PAPERKEY_FILE}" ]]; then
+  KB_KEY=$(cat "${KEYBASE_PAPERKEY_FILE}")
+else
+  # Don't store the key in env variable.
+  KB_KEY="${KEYBASE_PAPERKEY}"
+  unset KEYBASE_PAPERKEY
+fi
+
+# Log in to the keybase program.
+keybase oneshot --username "${KB_USER}" --paperkey "${KB_KEY}"
+if [[ "$?" -eq 0 ]]; then
+  echo "Logged in and ready!"
+fi
+
+exec "$@"
